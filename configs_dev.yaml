@@ -1,2 +1,0 @@
-api_server:
-  bind_addr: ":8081"

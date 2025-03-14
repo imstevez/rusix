@@ -5,12 +5,13 @@ use tokio::io::{self, AsyncReadExt};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Configs {
-    api_server: ApiServer,
+    pub api_server: ApiServer,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ApiServer {
-    bind_addr: String,
+    pub host: String,
+    pub port: u16,
 }
 
 impl Configs {
@@ -18,7 +19,6 @@ impl Configs {
     const CONFIGS_FILE_PATH_DEFAULT: &'static str = "./configs.yaml";
 
     fn file_path() -> io::Result<String> {
-        let v = env::var(Self::CONFIGS_FILE_PATH_ENV);
         match env::var(Self::CONFIGS_FILE_PATH_ENV) {
             Ok(path) => Ok(path),
             Err(env::VarError::NotPresent) => Ok(Self::CONFIGS_FILE_PATH_DEFAULT.to_string()),
