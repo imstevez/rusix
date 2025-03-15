@@ -1,3 +1,3 @@
 pub mod api;
-pub mod configs;
+pub mod config;
 pub mod schema;
