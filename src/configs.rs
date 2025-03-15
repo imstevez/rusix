@@ -3,11 +3,9 @@ use std::env;
 use tokio::fs::File;
 use tokio::io::{self, AsyncReadExt};
 
-pub mod api_server;
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Configs {
-    pub api_server: api_server::Configs,
+    pub api_server: ApiServer,
 }
 
 impl Configs {
@@ -31,4 +29,10 @@ impl Configs {
             serde_yaml::from_str(&contents).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
         Ok(conf)
     }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ApiServer {
+    pub host: String,
+    pub port: u16,
 }

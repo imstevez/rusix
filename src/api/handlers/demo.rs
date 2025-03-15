@@ -1,4 +1,4 @@
-use crate::apis::response::Response;
+use crate::api::response::Response;
 use actix_web::{Responder, get, web};
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -13,7 +13,7 @@ struct EchoReq {
 async fn echo(req: web::Json<EchoReq>) -> impl Responder {
     match req.validate() {
         Ok(_) => Response::ok(Some(req)),
-        Err(err) => Response::request_params_error(err),
+        Err(err) => Response::params_error(err),
     }
 }
 
@@ -24,5 +24,5 @@ async fn ok() -> impl Responder {
 
 #[get("/error")]
 async fn error() -> impl Responder {
-    Response::<&str>::internal_server_error("mock internal server error")
+    Response::<&str>::server_error("mock internal server error")
 }

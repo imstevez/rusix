@@ -22,7 +22,7 @@ impl<T> Response<T> {
         }
     }
 
-    pub fn request_params_error<E: ToString>(err: E) -> Self {
+    pub fn params_error<E: ToString>(err: E) -> Self {
         Self {
             code: CODE_PARAM_ERROR,
             message: err.to_string(),
@@ -30,7 +30,7 @@ impl<T> Response<T> {
         }
     }
 
-    pub fn internal_server_error<E: ToString>(err: E) -> Self {
+    pub fn server_error<E: ToString>(err: E) -> Self {
         Self {
             code: CODE_INTERNAL_ERROR,
             message: err.to_string(),

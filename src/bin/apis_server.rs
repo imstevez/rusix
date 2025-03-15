@@ -3,5 +3,5 @@ use rusix::*;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    apis::server::run(Configs::from_yaml().await?).await
+    api::run_server(Configs::from_yaml().await?).await
 }
