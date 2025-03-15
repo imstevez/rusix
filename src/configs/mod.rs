@@ -24,7 +24,6 @@ impl Configs {
 
     pub async fn from_yaml() -> io::Result<Self> {
         let path = Configs::file_path()?;
-        println!("Loading configs from file: {}", path);
         let mut file = File::open(path).await?;
         let mut contents = String::new();
         file.read_to_string(&mut contents).await?;
