@@ -3,15 +3,11 @@ use std::env;
 use tokio::fs::File;
 use tokio::io::{self, AsyncReadExt};
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Configs {
-    pub api_server: ApiServer,
-}
+pub mod api_server;
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ApiServer {
-    pub host: String,
-    pub port: u16,
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Configs {
+    pub api_server: api_server::Configs,
 }
 
 impl Configs {

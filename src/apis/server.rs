@@ -1,10 +1,10 @@
 use crate::apis::routers;
-use crate::config;
+use crate::configs::Configs;
 use actix_web::{App, HttpServer};
 
-pub async fn run(cfg: &config::ApiServer) -> std::io::Result<()> {
+pub async fn run(configs: Configs) -> std::io::Result<()> {
     HttpServer::new(|| App::new().service(routers::root()))
-        .bind((cfg.host.as_ref(), cfg.port))?
+        .bind((configs.api_server.host, configs.api_server.port))?
         .run()
         .await
 }
