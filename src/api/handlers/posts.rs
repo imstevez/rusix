@@ -55,9 +55,20 @@ struct CreatePostParams {
 
 #[post("")]
 async fn create_post(
-    _ds: Data<Datasource>,
+    ds: Data<Datasource>,
     params: Json<CreatePostParams>,
 ) -> Response<models::Post> {
-    println!("{},{}", params.title, params.body);
-    Response::ok(None)
+    if let Err(err) = params.validate() {
+        return Response::params_error(err.to_string());
+    }
+
+    let r = ds.rw_db.get();
+    if let Err(err) = r {
+        return Response::internal_error(err.to_string());
+    }
+
+    match repos::create_post(&mut r.unwrap(), &params.title, &params.body) {
+        Ok(post) => Response::ok(Some(post)),
+        Err(err) => Response::internal_error(err.to_string()),
+    }
 }
