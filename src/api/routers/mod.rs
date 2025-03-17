@@ -1,9 +1,9 @@
 use crate::api::middlewares;
+use crate::datasource::Datasource;
 use actix_web::Scope;
 use actix_web::dev::HttpServiceFactory;
 use actix_web::middleware::{ErrorHandlers, Logger};
 use actix_web::web::Data;
-use crate::datasource::Datasource;
 
 mod posts;
 
