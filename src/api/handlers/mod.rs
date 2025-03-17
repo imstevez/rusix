@@ -1,2 +1,1 @@
-pub mod demo;
-pub mod hello;
+pub mod posts;

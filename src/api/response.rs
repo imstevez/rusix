@@ -1,13 +1,21 @@
 use actix_web::{HttpRequest, HttpResponse, Responder, body::BoxBody, http::header::ContentType};
 use serde::Serialize;
 
-pub const CODE_OK: &str = "OK";
-pub const CODE_PARAM_ERROR: &str = "PARAM_ERROR";
-pub const CODE_INTERNAL_ERROR: &str = "INTERNAL_ERROR";
+#[derive(Serialize)]
+pub enum Code {
+    #[serde(rename = "OK")]
+    Ok,
+    #[serde(rename = "NOT_FOUND")]
+    NotFound,
+    #[serde(rename = "PARAM_ERROR")]
+    ParamError,
+    #[serde(rename = "INTERNAL_ERROR")]
+    InternalError,
+}
 
 #[derive(Serialize)]
 pub struct Response<T> {
-    code: &'static str,
+    code: Code,
     message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     data: Option<T>,
@@ -16,24 +24,32 @@ pub struct Response<T> {
 impl<T> Response<T> {
     pub fn ok(data: Option<T>) -> Self {
         Self {
-            code: CODE_OK,
+            code: Code::Ok,
             message: String::from("ok"),
             data,
         }
     }
 
-    pub fn params_error<E: ToString>(err: E) -> Self {
+    pub fn not_found() -> Self {
         Self {
-            code: CODE_PARAM_ERROR,
-            message: err.to_string(),
+            code: Code::NotFound,
+            message: "not found".to_string(),
             data: None,
         }
     }
 
-    pub fn server_error<E: ToString>(err: E) -> Self {
+    pub fn params_error(message: String) -> Self {
         Self {
-            code: CODE_INTERNAL_ERROR,
-            message: err.to_string(),
+            code: Code::ParamError,
+            message,
+            data: None,
+        }
+    }
+
+    pub fn internal_error(message: String) -> Self {
+        Self {
+            code: Code::InternalError,
+            message,
             data: None,
         }
     }

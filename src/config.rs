@@ -6,6 +6,7 @@ use tokio::io::{self, AsyncReadExt};
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
     pub api_server: ApiServer,
+    pub rw_db: Database,
 }
 
 impl Config {
@@ -35,4 +36,13 @@ impl Config {
 pub struct ApiServer {
     pub host: String,
     pub port: u16,
+}
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Database {
+    pub host: String,
+    pub port: u16,
+    pub user: String,
+    pub password: String,
+    pub database: String,
+    pub max_connections: u32,
 }

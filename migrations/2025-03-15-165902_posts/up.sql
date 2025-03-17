@@ -2,5 +2,5 @@
 create table if not exists posts (
     id serial primary key,
     title varchar not null default '',
-    content varchar not null default ''
+    body varchar not null default ''
 );
