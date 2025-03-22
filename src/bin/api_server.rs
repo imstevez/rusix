@@ -1,5 +1,4 @@
 use crate::config::Config;
-use log;
 use rusix::*;
 
 #[tokio::main]
