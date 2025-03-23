@@ -55,7 +55,7 @@ pub struct Error(Code, String);
 
 impl Error {
     pub fn not_found() -> Self {
-        Self(NotFound, "not found".to_string())
+        Self(NotFound, "Not Found".to_string())
     }
 
     pub fn request_error(message: String) -> Self {
