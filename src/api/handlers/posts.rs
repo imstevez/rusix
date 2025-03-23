@@ -33,10 +33,8 @@ async fn list_posts(
     params.validate()?;
     web::block(move || -> Result<Data<Vec<Post>>, Error> {
         let mut r = ds.rw_db.get()?;
-
         let list =
             repos::list_posts(&mut r, params.after, params.size).map(|d: Vec<Post>| Data(d))?;
-
         Ok(list)
     })
     .await?
