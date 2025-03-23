@@ -2,8 +2,9 @@ use crate::config;
 use crate::config::Config;
 use crate::utils;
 use diesel_async::AsyncPgConnection;
-use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_async::pooled_connection::deadpool::Pool;
+use diesel_async::pooled_connection::{AsyncDieselConnectionManager, PoolableConnection};
+use redis::AsyncCommands;
 use std::io::{Error, ErrorKind, Result};
 
 #[derive(Clone)]
@@ -14,9 +15,10 @@ pub struct Datasource {
 }
 
 impl Datasource {
-    pub fn new(cf: Config) -> Result<Self> {
-        let rw_db = Self::create_postgres_conn_pool(&cf.rw_db)?;
-        let redis_cli = redis::Client::open("redis://:c6bfb872-49f6-48bc-858d-2aca0c020702@127.0.0.1:6379/8").map_err(|e| Error::new(ErrorKind::Other, e))?;
+    pub async fn new(cf: Config) -> Result<Self> {
+        let rw_db = Self::create_postgres_conn_pool(&cf.rw_db).await?;
+        let redis_cli = Self::create_redis_cli(&cf.redis).await?;
+
         Ok(Self {
             cf,
             rw_db,
@@ -24,7 +26,7 @@ impl Datasource {
         })
     }
 
-    fn create_postgres_conn_pool(
+    async fn create_postgres_conn_pool(
         cf: &config::Database,
     ) -> Result<deadpool::managed::Pool<AsyncDieselConnectionManager<AsyncPgConnection>>> {
         let url = format!(
@@ -35,10 +37,38 @@ impl Datasource {
             cf.port,
             cf.database
         );
-
-        let config = AsyncDieselConnectionManager::<diesel_async::AsyncPgConnection>::new(url);
-        Pool::builder(config)
+        let config = AsyncDieselConnectionManager::<AsyncPgConnection>::new(url);
+        let pool = Pool::builder(config)
             .build()
-            .map_err(|err| Error::new(ErrorKind::Other, err))
+            .map_err(|err| Error::new(ErrorKind::Other, err))?;
+        let mut con = pool
+            .get()
+            .await
+            .map_err(|err| Error::new(ErrorKind::Other, err))?;
+        let _: () = con
+            .ping(&diesel_async::pooled_connection::RecyclingMethod::Fast)
+            .await
+            .map_err(|err| Error::new(ErrorKind::Other, err))?;
+        Ok(pool)
+    }
+
+    async fn create_redis_cli(cf: &config::Redis) -> Result<redis::Client> {
+        let url = format!(
+            "redis://:{}@{}:{}/{}",
+            utils::url_encode(&cf.password),
+            cf.host,
+            cf.port,
+            cf.database
+        );
+        let cli = redis::Client::open(url).map_err(|e| Error::new(ErrorKind::Other, e))?;
+        let mut con = cli
+            .get_multiplexed_tokio_connection()
+            .await
+            .map_err(|err| Error::new(ErrorKind::Other, err))?;
+        let _: () = con
+            .ping()
+            .await
+            .map_err(|e| Error::new(ErrorKind::Other, e))?;
+        Ok(cli)
     }
 }

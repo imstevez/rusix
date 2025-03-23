@@ -4,6 +4,7 @@ use crate::models::Post;
 use crate::repos;
 use actix_web::web;
 use actix_web::{get, post};
+use redis::AsyncCommands;
 use serde::Deserialize;
 use validator::Validate;
 
@@ -31,10 +32,22 @@ async fn list_posts(
     params: web::Query<ListPostsParams>,
 ) -> Result<Data<Vec<Post>>, Error> {
     params.validate()?;
+
+    let mut c = ds.redis_cli.get_multiplexed_tokio_connection().await?;
+    let var: Option<String> = c.get("aaa").await?;
+    if let Some(var) = var {
+        let d: Vec<Post> = serde_json::from_str(&var)?;
+        return Ok(Data(d));
+    }
+
     let mut r = ds.rw_db.get().await?;
     let list = repos::list_posts(&mut r, params.after, params.size)
         .await
         .map(|d: Vec<Post>| Data(d))?;
+
+    let r = serde_json::to_string(&list.0)?;
+
+    let _: () = c.set("aaa", r).await?;
     Ok(list)
 }
 
@@ -56,5 +69,9 @@ async fn create_post(
     let item = repos::create_post(&mut r, &params.title, &params.body)
         .await
         .map(|d: Post| Data(d))?;
+
+    let mut c = ds.redis_cli.get_multiplexed_tokio_connection().await?;
+    let _: () = c.del("aaa").await?;
+
     Ok(item)
 }

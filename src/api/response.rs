@@ -1,5 +1,4 @@
 use crate::api::response::Code::{InternalError, NotFound, RequestError};
-use actix_web::error::BlockingError;
 use actix_web::http::StatusCode;
 use actix_web::{
     HttpRequest, HttpResponse, Responder, ResponseError, body::BoxBody, http::header::ContentType,
@@ -38,6 +37,7 @@ impl Responder for Empty {
     }
 }
 
+#[derive(Serialize, Debug, Display)]
 pub struct Data<T: Serialize>(pub T);
 
 impl<T: Serialize> Responder for Data<T> {
@@ -93,12 +93,6 @@ impl From<ValidationErrors> for Error {
     }
 }
 
-impl From<r2d2::Error> for Error {
-    fn from(err: r2d2::Error) -> Self {
-        Error(InternalError, err.to_string())
-    }
-}
-
 impl From<std::io::Error> for Error {
     fn from(err: std::io::Error) -> Self {
         Error(InternalError, err.to_string())
@@ -111,14 +105,20 @@ impl From<diesel::result::Error> for Error {
     }
 }
 
-impl From<BlockingError> for Error {
-    fn from(err: BlockingError) -> Self {
+impl From<PoolError<diesel_async::pooled_connection::PoolError>> for Error {
+    fn from(err: PoolError<diesel_async::pooled_connection::PoolError>) -> Self {
         Error(InternalError, err.to_string())
     }
 }
 
-impl From<PoolError<diesel_async::pooled_connection::PoolError>> for Error {
-    fn from(value: PoolError<diesel_async::pooled_connection::PoolError>) -> Self {
-        Error(InternalError, value.to_string())
+impl From<redis::RedisError> for Error {
+    fn from(err: redis::RedisError) -> Self {
+        Error(InternalError, err.to_string())
+    }
+}
+
+impl From<serde_json::Error> for Error {
+    fn from(err: serde_json::Error) -> Self {
+        Error(InternalError, err.to_string())
     }
 }
