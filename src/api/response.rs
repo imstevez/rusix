@@ -4,6 +4,7 @@ use actix_web::http::StatusCode;
 use actix_web::{
     HttpRequest, HttpResponse, Responder, ResponseError, body::BoxBody, http::header::ContentType,
 };
+use deadpool::managed::PoolError;
 use derive_more::Display;
 use serde::Serialize;
 use serde_json::json;
@@ -113,5 +114,11 @@ impl From<diesel::result::Error> for Error {
 impl From<BlockingError> for Error {
     fn from(err: BlockingError) -> Self {
         Error(InternalError, err.to_string())
+    }
+}
+
+impl From<PoolError<diesel_async::pooled_connection::PoolError>> for Error {
+    fn from(value: PoolError<diesel_async::pooled_connection::PoolError>) -> Self {
+        Error(InternalError, value.to_string())
     }
 }

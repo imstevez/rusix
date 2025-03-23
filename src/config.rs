@@ -7,6 +7,7 @@ use tokio::io::{self, AsyncReadExt};
 pub struct Config {
     pub api_server: ApiServer,
     pub rw_db: Database,
+    pub redis_cli: Redis,
 }
 
 impl Config {
@@ -45,4 +46,12 @@ pub struct Database {
     pub password: String,
     pub database: String,
     pub max_connections: u32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Redis {
+    pub host: String,
+    pub port: u16,
+    pub password: String,
+    pub database: u16,
 }

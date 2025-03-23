@@ -31,13 +31,11 @@ async fn list_posts(
     params: web::Query<ListPostsParams>,
 ) -> Result<Data<Vec<Post>>, Error> {
     params.validate()?;
-    web::block(move || -> Result<Data<Vec<Post>>, Error> {
-        let mut r = ds.rw_db.get()?;
-        let list =
-            repos::list_posts(&mut r, params.after, params.size).map(|d: Vec<Post>| Data(d))?;
-        Ok(list)
-    })
-    .await?
+    let mut r = ds.rw_db.get().await?;
+    let list = repos::list_posts(&mut r, params.after, params.size)
+        .await
+        .map(|d: Vec<Post>| Data(d))?;
+    Ok(list)
 }
 
 #[derive(Validate, Deserialize)]
@@ -54,12 +52,9 @@ async fn create_post(
     params: web::Json<CreatePostParams>,
 ) -> Result<Data<Post>, Error> {
     params.validate()?;
-
-    web::block(move || -> Result<Data<Post>, Error> {
-        let mut r = ds.rw_db.get()?;
-        let item =
-            repos::create_post(&mut r, &params.title, &params.body).map(|d: Post| Data(d))?;
-        Ok(item)
-    })
-    .await?
+    let mut r = ds.rw_db.get().await?;
+    let item = repos::create_post(&mut r, &params.title, &params.body)
+        .await
+        .map(|d: Post| Data(d))?;
+    Ok(item)
 }
