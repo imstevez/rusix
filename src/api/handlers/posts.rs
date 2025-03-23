@@ -1,8 +1,8 @@
-use crate::api::response::Response;
+use crate::api::response::*;
 use crate::datasource::Datasource;
-use crate::models;
+use crate::models::Post;
 use crate::repos;
-use actix_web::web::{Data, Json, Query};
+use actix_web::web;
 use actix_web::{get, post};
 use serde::Deserialize;
 use validator::Validate;
@@ -27,22 +27,19 @@ fn default_size() -> i64 {
 
 #[get("")]
 async fn list_posts(
-    ds: Data<Datasource>,
-    params: Query<ListPostsParams>,
-) -> Response<Vec<models::Post>> {
-    if let Err(err) = params.validate() {
-        return Response::params_error(err.to_string());
-    }
+    ds: web::Data<Datasource>,
+    params: web::Query<ListPostsParams>,
+) -> Result<Data<Vec<Post>>, Error> {
+    params.validate()?;
+    web::block(move || -> Result<Data<Vec<Post>>, Error> {
+        let mut r = ds.rw_db.get()?;
 
-    let r = ds.rw_db.get();
-    if let Err(err) = r {
-        return Response::internal_error(err.to_string());
-    }
+        let list =
+            repos::list_posts(&mut r, params.after, params.size).map(|d: Vec<Post>| Data(d))?;
 
-    match repos::list_posts(&mut r.unwrap(), params.after, params.size) {
-        Ok(list) => Response::ok(Some(list)),
-        Err(err) => Response::internal_error(err.to_string()),
-    }
+        Ok(list)
+    })
+    .await?
 }
 
 #[derive(Validate, Deserialize)]
@@ -55,20 +52,16 @@ struct CreatePostParams {
 
 #[post("")]
 async fn create_post(
-    ds: Data<Datasource>,
-    params: Json<CreatePostParams>,
-) -> Response<models::Post> {
-    if let Err(err) = params.validate() {
-        return Response::params_error(err.to_string());
-    }
+    ds: web::Data<Datasource>,
+    params: web::Json<CreatePostParams>,
+) -> Result<Data<Post>, Error> {
+    params.validate()?;
 
-    let r = ds.rw_db.get();
-    if let Err(err) = r {
-        return Response::internal_error(err.to_string());
-    }
-
-    match repos::create_post(&mut r.unwrap(), &params.title, &params.body) {
-        Ok(post) => Response::ok(Some(post)),
-        Err(err) => Response::internal_error(err.to_string()),
-    }
+    web::block(move || -> Result<Data<Post>, Error> {
+        let mut r = ds.rw_db.get()?;
+        let item =
+            repos::create_post(&mut r, &params.title, &params.body).map(|d: Post| Data(d))?;
+        Ok(item)
+    })
+    .await?
 }

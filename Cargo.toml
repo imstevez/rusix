@@ -7,11 +7,12 @@ edition = "2024"
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9.33"
-serde_json = "1.0.140"
+serde_json = { version = "1.0.140", features = ["preserve_order"] }
+url = "2.5.4"
 validator = { version = "0.19", features = ["derive"] }
 actix-web = "4"
 diesel = { version = "2.2.0", features = ["postgres", "r2d2"] }
-url = { version = "2" }
+r2d2 = { version = "0.8.10"}
 log = "0.4.26"
 simple_logger = "4.0"
 derive_more = "2.0.1"

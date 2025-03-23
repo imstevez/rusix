@@ -1,4 +1,4 @@
-use crate::api::middlewares;
+use crate::api::middlewares::*;
 use crate::datasource::Datasource;
 use actix_web::Scope;
 use actix_web::dev::HttpServiceFactory;
@@ -9,7 +9,7 @@ mod posts;
 
 pub fn api(ds: Datasource) -> impl HttpServiceFactory {
     Scope::new("/api")
-        .wrap(ErrorHandlers::new().default_handler(middlewares::handle_err))
+        .wrap(ErrorHandlers::new().default_handler(handle_err))
         .wrap(Logger::default())
         .app_data(Data::new(ds.clone()))
         .service(v1())
