@@ -8,19 +8,19 @@ use redis::AsyncCommands;
 use std::io::{Error, ErrorKind, Result};
 
 #[derive(Clone)]
-pub struct Datasource {
-    pub cf: Config,
+pub struct State {
+    pub cfg: Config,
     pub rw_db: deadpool::managed::Pool<AsyncDieselConnectionManager<AsyncPgConnection>>,
     pub redis_cli: redis::Client,
 }
 
-impl Datasource {
-    pub async fn new(cf: Config) -> Result<Self> {
-        let rw_db = Self::create_postgres_conn_pool(&cf.rw_db).await?;
-        let redis_cli = Self::create_redis_cli(&cf.redis).await?;
+impl State {
+    pub async fn new(cfg: Config) -> Result<Self> {
+        let rw_db = Self::create_postgres_conn_pool(&cfg.rw_db).await?;
+        let redis_cli = Self::create_redis_cli(&cfg.redis).await?;
 
         Ok(Self {
-            cf,
+            cfg,
             rw_db,
             redis_cli,
         })

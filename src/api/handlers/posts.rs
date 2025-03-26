@@ -1,5 +1,5 @@
 use crate::api::response::*;
-use crate::datasource::Datasource;
+use crate::state::State;
 use crate::models::Post;
 use crate::repos;
 use actix_web::web;
@@ -9,7 +9,7 @@ use serde::Deserialize;
 use validator::Validate;
 
 #[derive(Validate, Deserialize)]
-struct ListPostsParams {
+struct ListPostsArgs {
     #[serde(default = "default_after")]
     #[validate(range(min = 1))]
     after: i32,
@@ -28,20 +28,20 @@ fn default_size() -> i64 {
 
 #[get("")]
 async fn list_posts(
-    ds: web::Data<Datasource>,
-    params: web::Query<ListPostsParams>,
+    state: web::Data<State>,
+    args: web::Query<ListPostsArgs>,
 ) -> Result<Data<Vec<Post>>, Error> {
-    params.validate()?;
+    args.validate()?;
 
-    let mut c = ds.redis_cli.get_multiplexed_tokio_connection().await?;
+    let mut c = state.redis_cli.get_multiplexed_tokio_connection().await?;
     let var: Option<String> = c.get("aaa").await?;
     if let Some(var) = var {
         let d: Vec<Post> = serde_json::from_str(&var)?;
         return Ok(Data(d));
     }
 
-    let mut r = ds.rw_db.get().await?;
-    let list = repos::list_posts(&mut r, params.after, params.size)
+    let mut r = state.rw_db.get().await?;
+    let list = repos::list_posts(&mut r, args.after, args.size)
         .await
         .map(|d: Vec<Post>| Data(d))?;
 
@@ -61,16 +61,16 @@ struct CreatePostParams {
 
 #[post("")]
 async fn create_post(
-    ds: web::Data<Datasource>,
-    params: web::Json<CreatePostParams>,
+    state: web::Data<State>,
+    arg: web::Json<CreatePostParams>,
 ) -> Result<Data<Post>, Error> {
-    params.validate()?;
-    let mut r = ds.rw_db.get().await?;
-    let item = repos::create_post(&mut r, &params.title, &params.body)
+    arg.validate()?;
+    let mut r = state.rw_db.get().await?;
+    let item = repos::create_post(&mut r, &arg.title, &arg.body)
         .await
         .map(|d: Post| Data(d))?;
 
-    let mut c = ds.redis_cli.get_multiplexed_tokio_connection().await?;
+    let mut c = state.redis_cli.get_multiplexed_tokio_connection().await?;
     let _: () = c.del("aaa").await?;
 
     Ok(item)
